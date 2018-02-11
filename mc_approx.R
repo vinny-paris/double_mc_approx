@@ -41,5 +41,33 @@ mc_approx_double_par <- function(x){
 
 mm <- c(100,200,300,400,500,600,700,800,900,1000,2000)
 ka <- sapply(mm,  mc_approx_up)
+ki <- sapply(mm, mc_approx_double_up)
+double_mc <- ki
+mc <- ka
 
-ki <- sapply(mm, mc_approx_double_old_up)
+#sample variance vs believed variance for single mc
+sample_est <- apply(mc, 2, var)
+j <- apply(mc, 2, mean)
+binomial_est <- j*(1-j)/mm
+sample_est
+binomial_est
+binomial_est/sample_est
+
+
+
+
+#sample variance vs believed variance for double mc
+sample_est_double <- apply(double_mc, 2, var)
+j_double <- apply(double_mc, 2, mean)
+binomial_est_double <- j_double*(1-j_double)/mm
+sample_est_double
+binomial_est_double
+binomial_est_double/sample_est_double
+
+
+
+
+#Final Solution
+sample_est/sample_est_double
+binomial_est/binomial_est_double
+
