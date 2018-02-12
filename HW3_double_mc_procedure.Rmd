@@ -1,0 +1,88 @@
+---
+title: "601 HW 3"
+author: "Vinny Paris"
+date: "2/11/2018"
+output: pdf_document
+---
+
+```{r}
+
+#Simple Comparison
+# 1/M * sum(indicator(y>x))
+#Above ran 2000 times
+
+mc_approx_up <- function(x){
+  holding <- matrix(ncol=11, nrow = 2000)
+  holding <- sapply(1:2000, function(y){sum(rnorm(x)<rnorm(x))/x})
+  return(holding)
+}
+
+
+
+#Double Comparison
+#1/M*sum_i(1/M*sum_j(y_i>x_j))
+#Above ran 2000 times
+#simplification of 1/M^2 * sum(expanded(y) > x)
+#x cycled
+
+mc_approx_double_up <- function(x){
+  holding <- matrix(ncol = 11, nrow = 2000)
+  fake_function <- function(y){sum(kronecker(rnorm(x), rep(1,x)) <rnorm(x))/x^2}
+  holding <- sapply(1:2000, fake_function)
+  return(holding)
+}
+
+mm <- c(100,200,300,400,500,600,700,800,900,1000,2000)
+```
+
+
+```{r}
+double_mc <- read.csv('ki.csv')[,-1]
+mc <- read.csv('ka.csv')[,-1]
+
+```
+
+## Relative Precision of Single MC
+
+```{r}
+#sample variance vs believed variance for single mc
+sample_est <- apply(mc, 2, var)
+j <- apply(mc, 2, mean)
+bernoulli_est <- j*(1-j)/mm
+ratio <- bernoulli_est/sample_est
+data <- data.frame(sample_est, bernoulli_est, ratio)
+data <- t(data)
+colnames(data) <- c("M100", "M200", "M300", "M400", "M500", "M600",
+                    "M700", "M800", "M900", "M1000", "M2000")
+round(data, 6)
+```
+It appears that the Bernoulli estimator is extremely close and has no advantage/disadvantage over the sample variance. This is fully expected since in effect we have 2000*M bernoulli trials with expected value .5. We merely broke up the trials into two groups (the first one being the sample size M's and the second group being the 2000 N's). The full variance of this then could be written as, for I being total number of 1's in the data frame, I(2000M - I)/(2000M)^2 which is equilavent to p(1-p)/M where p is the grand mean proportion.
+
+## Relative Precision of Double MC
+```{r}
+#sample variance vs believed variance for double mc
+sample_est_double <- apply(double_mc, 2, var)
+j_double <- apply(double_mc, 2, mean)
+bernoulli_est_double <- j_double*(1-j_double)/mm
+ratio <- bernoulli_est_double/sample_est_double
+data <- data.frame(sample_est_double, bernoulli_est_double, ratio)
+data <- t(data)
+colnames(data) <- c("M100", "M200", "M300", "M400", "M500", "M600",
+                    "M700", "M800", "M900", "M1000", "M2000")
+round(data, 6)
+```
+So here using the expected variance does not work well at all. I believe the main issue for the excess variation in them is that using this formula is still assuming that each bernoulli trial is independent. This is not true though. Take X to be the 'outer' monte carlo sample and Y to be the 'inner'. If, for X_1 and Y_i for i between 1-20 (say), Indicator(X_1 > Y_i) is 1 for all Y_i then I'll put money down on what the indicator will be for X > Y_21. This positive covariance structure reduces the variance we observe compared to what we naively expected. I believe the best way to model this variance would be using the sum of non-identical but independent binomials which according to a quick google search does not appear to be a simple task and is beyond the scope of this assignment (Actually looks like my undergrad advisor might have wrote a paper on this. Kind of cool). 
+
+## Relative Precision For Double vs Single MC
+
+```{r}
+#Final Solution
+sample_ratio <- sample_est/sample_est_double
+bernoulli_ratio <- bernoulli_est/bernoulli_est_double
+
+data <- t(data.frame(sample_ratio, bernoulli_ratio))
+colnames(data) <- c("M100", "M200", "M300", "M400", "M500", "M600",
+                    "M700", "M800", "M900", "M1000", "M2000")
+round(data, 6)
+```
+So it appears that the double monte carlo procedure, using the sample variances, is about 2/3 more precise than using the the single monte carlo procedure. Trying to estimate the variance the same way we would for iid bernoulli trials does not produce an advantage to either procedure but again, I think it would be a poor decision to use this method. Also worth noting is that it appears to be irrelevant the M size for choosing which method is preferred. 

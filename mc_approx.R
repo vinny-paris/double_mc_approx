@@ -68,6 +68,6 @@ binomial_est_double/sample_est_double
 
 
 #Final Solution
-sample_est/sample_est_double
-binomial_est/binomial_est_double
+sample_ratio <- sample_est/sample_est_double
+bernoulli_ratio <- bernoulli_est/bernoulli_est_double
 
